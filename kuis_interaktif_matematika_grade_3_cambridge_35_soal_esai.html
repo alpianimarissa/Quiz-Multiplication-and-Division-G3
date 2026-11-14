@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kuis Esai Interaktif - Grade 3 Cambridge Maths</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #f1f5f9;
+            color: #1e293b;
+        }
+        h1, h2, h3, .font-display {
+            font-family: 'Fredoka', sans-serif;
+        }
+        /* Hilangkan panah spinner pada input number */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; 
+            margin: 0; 
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-gradient-to-r from-indigo-600 via-blue-600 to-sky-600 text-white shadow-md sticky top-0 z-30">
+        <div class="max-w-5xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+                <div class="bg-white text-indigo-600 p-2 rounded-2xl shadow text-2xl">📝</div>
+                <div>
+                    <h1 class="text-lg sm:text-xl font-bold leading-tight">Kuis Esai Matematika • Grade 3</h1>
+                    <p class="text-xs text-sky-100">Kurikulum Cambridge / Marshall Cavendish • 7 Sub-Bab (35 Soal)</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <!-- Auto-save status -->
+                <div id="save-indicator" class="hidden sm:flex items-center gap-1.5 bg-white/15 px-3 py-1.5 rounded-xl text-xs font-semibold text-sky-50 border border-white/20">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span>Tersimpan Otomatis</span>
+                </div>
+
+                <!-- Score Badge -->
+                <div class="bg-indigo-900/50 px-3.5 py-1.5 rounded-xl border border-indigo-400/30 text-right">
+                    <div class="text-[10px] uppercase tracking-wider text-sky-200 font-bold">Skor Benar</div>
+                    <div class="text-base font-extrabold leading-none"><span id="total-correct">0</span> / 35</div>
+                </div>
+
+                <!-- Reset Button -->
+                <button onclick="openResetModal()" title="Ulangi Semua Jawaban" class="bg-rose-500 hover:bg-rose-600 text-white p-2 rounded-xl text-xs font-bold shadow transition">
+                    🔄 Reset
+                </button>
+            </div>
+        </div>
+
+        <!-- Sub-Chapter Navigation Tabs -->
+        <div class="bg-indigo-950/30 border-t border-white/10">
+            <div id="sub-tabs" class="max-w-5xl mx-auto px-3 py-2 flex overflow-x-auto gap-2 no-scrollbar">
+                <!-- Sub-tabs injected by JS -->
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Quiz Workspace -->
+    <main class="flex-1 max-w-4xl w-full mx-auto p-4 sm:p-6 space-y-5">
+
+        <!-- Sub-chapter Info & Question Number Navigator -->
+        <div class="bg-white rounded-3xl p-4 sm:p-5 shadow-sm border border-slate-200">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 mb-3 border-b border-slate-100">
+                <div>
+                    <span id="sub-badge" class="text-xs font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-lg bg-indigo-100 text-indigo-700">Sub-Bab A</span>
+                    <h2 id="sub-title" class="text-lg sm:text-xl font-bold text-slate-800 mt-1">Multiplication Table of 6</h2>
+                </div>
+                <div class="text-xs font-bold text-slate-500">
+                    Progres Sub-Bab ini: <span id="sub-progress" class="text-indigo-600">0/5 Benar</span>
+                </div>
+            </div>
+
+            <!-- 1-5 Question Dots Navigator -->
+            <div class="flex items-center justify-between gap-2">
+                <span class="text-xs font-bold text-slate-400 uppercase">Nomor Soal:</span>
+                <div id="q-number-pills" class="flex items-center gap-2">
+                    <!-- Pills 1-5 injected by JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Question Card -->
+        <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-md border-2 border-indigo-100 transition-all">
+            <!-- Top Row: Question Number & Hint Toggle -->
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+                <span id="q-label" class="bg-sky-100 text-sky-800 font-extrabold px-3.5 py-1 rounded-full text-sm">
+                    Soal 1 dari 5
+                </span>
+                <div class="flex items-center gap-2">
+                    <button onclick="toggleIndo()" class="text-xs font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-1.5 rounded-xl transition">
+                        🌐 <span id="indo-btn-label">Terjemahan</span>
+                    </button>
+                    <button onclick="toggleHint()" class="text-xs font-bold bg-amber-100 hover:bg-amber-200 text-amber-800 px-3 py-1.5 rounded-xl transition">
+                        💡 Metode / Petunjuk
+                    </button>
+                </div>
+            </div>
+
+            <!-- Question Prompt + Integrated Inline Answer Boxes -->
+            <div class="bg-slate-50 border-l-4 border-indigo-500 p-5 sm:p-6 rounded-2xl mb-5">
+                <div id="q-prompt-en" class="text-lg sm:text-xl font-bold text-slate-800 leading-[2.4]"></div>
+                <p id="q-prompt-id" class="hidden text-sm text-slate-600 italic mt-4 pt-3 border-t border-slate-200 leading-relaxed"></p>
+            </div>
+
+            <!-- Method / Hint Box (Collapsible) -->
+            <div id="hint-box" class="hidden bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-5 text-sm text-amber-950">
+                <div class="font-extrabold text-amber-800 mb-1">🔍 Metode Penyelesaian:</div>
+                <p id="q-hint-text"></p>
+            </div>
+
+            <!-- Check Answer Action -->
+            <div class="flex flex-wrap items-center gap-3">
+                <button onclick="submitAnswer()" id="check-btn" class="bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white font-bold py-3 px-7 rounded-2xl shadow-md transition flex items-center gap-2">
+                    <span>✅ Cek Jawaban</span>
+                </button>
+                <span id="status-pill" class="hidden px-4 py-2 rounded-xl font-extrabold text-sm"></span>
+            </div>
+
+            <!-- Immediate Feedback & Step-by-Step Solution -->
+            <div id="feedback-box" class="hidden mt-6 p-5 rounded-2xl border-2 transition-all">
+                <div id="feedback-header" class="font-extrabold text-base sm:text-lg mb-1"></div>
+                <p id="feedback-explanation" class="text-sm sm:text-base leading-relaxed"></p>
+            </div>
+
+            <!-- Bottom Prev / Next Navigation -->
+            <div class="mt-8 pt-5 border-t border-slate-100 flex items-center justify-between gap-3">
+                <button onclick="navigateQuestion(-1)" id="prev-btn" class="bg-slate-100 hover:bg-slate-200 disabled:opacity-40 disabled:pointer-events-none text-slate-700 font-bold py-2.5 px-5 rounded-xl text-sm transition">
+                    ⬅️ Sebelumnya
+                </button>
+                <span id="overall-pos" class="text-xs font-bold text-slate-400">Soal 1 / 30</span>
+                <button onclick="navigateQuestion(1)" id="next-btn" class="bg-sky-600 hover:bg-sky-700 disabled:opacity-40 disabled:pointer-events-none text-white font-bold py-2.5 px-5 rounded-xl text-sm shadow transition">
+                    Selanjutnya ➡️
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Reset Confirmation Modal -->
+    <div id="reset-modal" class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl text-center">
+            <div class="text-4xl mb-2">⚠️</div>
+            <h3 class="text-xl font-bold text-slate-800">Ulangi Semua Kuis?</h3>
+            <p class="text-sm text-slate-600 mt-2 mb-6">Semua jawaban yang sudah tersimpan akan dihapus dan skor kembali menjadi 0.</p>
+            <div class="flex gap-3 justify-center">
+                <button onclick="closeResetModal()" class="flex-1 py-2.5 rounded-xl font-bold bg-slate-100 text-slate-700 hover:bg-slate-200">Batal</button>
+                <button onclick="confirmReset()" class="flex-1 py-2.5 rounded-xl font-bold bg-rose-600 text-white hover:bg-rose-700">Ya, Hapus</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // =========================================================================
+        // BANK SOAL LENGKAP: 7 SUB-BAB × 5 SOAL ESAI = 35 SOAL
+        // Diurutkan dari yang termudah -> tersulit (baik urutan sub-bab maupun nomor soal)
+        // =========================================================================
+        const quizData = [
+            {
+                id: "subA",
+                code: "Sub-Bab A",
+                shortTitle: "A. Perkalian 6",
+                title: "A. Multiplication Table of 6 (Dari Mudah ke Cerita)",
+                questions: [
+                    {
+                        en: "Complete the multiplication and division equations:\n6 × {a} = 30\n30 ÷ 6 = {b}",
+                        id: "Lengkapi persamaan perkalian dan pembagian 6 di atas.",
+                        hint: "Ingat perkalian 6: 6 dikali berapa yang hasilnya 30?",
+                        fields: [
+                            { key: "a", answer: 5 },
+                            { key: "b", answer: 5 }
+                        ],
+                        explanation: "6 × 5 = 30, sehingga kebalikannya 30 ÷ 6 = 5."
+                    },
+                    {
+                        en: "Fill in the missing numbers:\n7 × 6 = (5 × 6) + ( {a} × 6 ) = {b}",
+                        id: "Isilah angka yang hilang menggunakan strategi patokan 5 × 6.",
+                        hint: "Pecah angka 7 menjadi 5 + 2. Hitung (5 × 6) ditambah (2 × 6).",
+                        fields: [
+                            { key: "a", answer: 2 },
+                            { key: "b", answer: 42 }
+                        ],
+                        explanation: "7 × 6 dipecah menjadi (5 × 6) + (2 × 6) = 30 + 12 = 42."
+                    },
+                    {
+                        en: "Fill in the missing numbers:\n9 × 6 = (10 × 6) - ( {a} × 6 ) = {b}",
+                        id: "Isilah angka yang hilang menggunakan strategi patokan 10 × 6.",
+                        hint: "9 kelompok berisi 6 sama dengan 10 kelompok berisi 6 dikurangi 1 kelompok berisi 6 (60 - 6).",
+                        fields: [
+                            { key: "a", answer: 1 },
+                            { key: "b", answer: 54 }
+                        ],
+                        explanation: "10 × 6 = 60. Karena 9 adalah 10 dikurangi 1, maka 9 × 6 = 60 - (1 × 6) = 60 - 6 = 54."
+                    },
+                    {
+                        en: "Amina baked 48 cupcakes. She gave 6 cupcakes to each of her neighbours.\nShe gave the cupcakes to {a} neighbours.",
+                        id: "Amina memanggang 48 kue mangkuk. Ia memberikan 6 kue kepada setiap tetangganya. Kepada berapa banyak tetangga ia memberikan kue tersebut?",
+                        hint: "Total = 48 kue sudah diketahui, Each = 6 kue per tetangga. Cari Groups dengan pembagian (48 ÷ 6).",
+                        fields: [
+                            { key: "a", answer: 8 }
+                        ],
+                        explanation: "48 ÷ 6 = 8 tetangga (Cek: 8 × 6 = 48)."
+                    },
+                    {
+                        en: "There are 42 pupils in Grade 3A.\n(a) The teacher divides the pupils into 6 equal groups.\nThere are {a} pupils in each group.\n(b) Each pupil gets 4 star stickers.\nEach group gets {b} star stickers altogether.",
+                        id: "Ada 42 murid di kelas 3A. (a) Guru membagi murid menjadi 6 kelompok sama banyak. Berapa murid di tiap kelompok? (b) Tiap murid mendapat 4 stiker bintang. Berapa total stiker yang didapat tiap kelompok?",
+                        hint: "Soal 2 Langkah (Metode GET): (a) Total 42 dibagi 6 kelompok. (b) Hasil murid tiap kelompok dikali 4 stiker.",
+                        fields: [
+                            { key: "a", answer: 7 },
+                            { key: "b", answer: 28 }
+                        ],
+                        explanation: "(a) 42 ÷ 6 = 7 murid per kelompok. (b) 7 murid × 4 stiker = 28 stiker bintang per kelompok."
+                    }
+                ]
+            },
+            {
+                id: "subB",
+                code: "Sub-Bab B",
+                shortTitle: "B. Perkalian 8",
+                title: "B. Multiplication Table of 8 (Dari Mudah ke Cerita)",
+                questions: [
+                    {
+                        en: "Complete the multiplication and division equations:\n8 × {a} = 48\n48 ÷ 8 = {b}",
+                        id: "Lengkapi persamaan perkalian dan pembagian 8 di atas.",
+                        hint: "8 dikali berapa yang hasilnya 48?",
+                        fields: [
+                            { key: "a", answer: 6 },
+                            { key: "b", answer: 6 }
+                        ],
+                        explanation: "8 × 6 = 48, sehingga 48 ÷ 8 = 6."
+                    },
+                    {
+                        en: "Fill in the missing numbers:\n7 × 8 = (5 × 8) + ( {a} × 8 ) = {b}",
+                        id: "Isilah angka yang hilang menggunakan strategi patokan 5 × 8.",
+                        hint: "Pecah angka 7 menjadi 5 + 2. Hitung (5 × 8) ditambah (2 × 8) = 40 + 16.",
+                        fields: [
+                            { key: "a", answer: 2 },
+                            { key: "b", answer: 56 }
+                        ],
+                        explanation: "7 × 8 dipecah menjadi (5 × 8) + (2 × 8) = 40 + 16 = 56."
+                    },
+                    {
+                        en: "Fill in the missing numbers:\n9 × 8 = (10 × 8) - ( {a} × 8 ) = {b}",
+                        id: "Isilah angka yang hilang menggunakan strategi patokan 10 × 8.",
+                        hint: "10 × 8 = 80. Untuk mendapat 9 × 8, kurangi 80 dengan 1 × 8.",
+                        fields: [
+                            { key: "a", answer: 1 },
+                            { key: "b", answer: 72 }
+                        ],
+                        explanation: "9 × 8 = (10 × 8) - (1 × 8) = 80 - 8 = 72."
+                    },
+                    {
+                        en: "An octopus has 8 arms.\n6 octopuses have {a} arms altogether.",
+                        id: "Seekor gurita memiliki 8 lengan. Berapa banyak lengan yang dimiliki 6 ekor gurita seluruhnya?",
+                        hint: "Groups = 6 gurita, Each = 8 lengan. Cari Total = 6 × 8.",
+                        fields: [
+                            { key: "a", answer: 48 }
+                        ],
+                        explanation: "6 gurita × 8 lengan = 48 lengan seluruhnya."
+                    },
+                    {
+                        en: "There are 64 books in a library corner.\n(a) The books are arranged equally on 8 shelves.\nThere are {a} books on each shelf.\n(b) Each book has 5 colourful bookmarks inside.\nThere are {b} bookmarks on each shelf altogether.",
+                        id: "Ada 64 buku di pojok baca. (a) Buku disusun sama banyak di 8 rak. Berapa buku di tiap rak? (b) Setiap buku berisi 5 pembatas buku warna-warni. Berapa total pembatas buku di setiap rak?",
+                        hint: "Soal 2 Langkah: (a) Bagi 64 ÷ 8 dulu untuk tahu jumlah buku di 1 rak. (b) Kalikan jumlah buku di 1 rak itu dengan 5 pembatas buku!",
+                        fields: [
+                            { key: "a", answer: 8 },
+                            { key: "b", answer: 40 }
+                        ],
+                        explanation: "(a) 64 ÷ 8 = 8 buku per rak. (b) 8 buku × 5 pembatas = 40 pembatas buku di setiap rak."
+                    }
+                ]
+            },
+            {
+                id: "subC",
+                code: "Sub-Bab C",
+                shortTitle: "C. Perkalian 9",
+                title: "C. Multiplication Table of 9 (Dari Mudah ke Cerita)",
+                questions: [
+                    {
+                        en: "Complete the equations:\n9 × {a} = 81\n81 ÷ 9 = {b}",
+                        id: "Lengkapi kedua persamaan perkalian dan pembagian 9 di atas.",
+                        hint: "9 dikali berapa hasilnya 81?",
+                        fields: [
+                            { key: "a", answer: 9 },
+                            { key: "b", answer: 9 }
+                        ],
+                        explanation: "9 × 9 = 81, sehingga 81 ÷ 9 = 9."
+                    },
+                    {
+                        en: "Complete the equation:\n8 × 9 = (5 × 9) + ( 3 × {a} ) = {b}",
+                        id: "Lengkapi persamaan di atas dengan memecah 8 menjadi 5 dan 3.",
+                        hint: "Kita sedang menghitung perkalian 9, jadi angka pertama adalah 9. Hitung 45 + 27.",
+                        fields: [
+                            { key: "a", answer: 9 },
+                            { key: "b", answer: 72 }
+                        ],
+                        explanation: "8 × 9 = (5 × 9) + (3 × 9) = 45 + 27 = 72."
+                    },
+                    {
+                        en: "Complete the equation:\n7 × 9 = (10 × 9) - ( {a} × 9 ) = {b}",
+                        id: "Lengkapi persamaan di atas menggunakan strategi 10 × 9.",
+                        hint: "10 dikurangi berapa yang hasilnya 7? (10 - 3 = 7). Hitung 90 - 27.",
+                        fields: [
+                            { key: "a", answer: 3 },
+                            { key: "b", answer: 63 }
+                        ],
+                        explanation: "7 × 9 = (10 × 9) - (3 × 9) = 90 - 27 = 63."
+                    },
+                    {
+                        en: "A bakery sells 9 boxes of tarts. Each box contains 6 tarts.\n{a} tarts are sold altogether.",
+                        id: "Sebuah toko roti menjual 9 kotak kue tart. Setiap kotak berisi 6 kue tart. Berapa total kue tart yang terjual?",
+                        hint: "Groups = 9 kotak, Each = 6 kue. Cari Total dengan 9 × 6.",
+                        fields: [
+                            { key: "a", answer: 54 }
+                        ],
+                        explanation: "9 kotak × 6 kue tart = 54 kue tart seluruhnya."
+                    },
+                    {
+                        en: "There are 54 scouts in a hall.\n(a) They are arranged in 9 equal rows.\nThere are {a} scouts in each row.\n(b) Each row is given 7 flags.\n{b} flags are given out in all.",
+                        id: "Ada 54 anggota pramuka di aula. (a) Mereka berbaris dalam 9 baris sama banyak. Berapa anggota di tiap baris? (b) Setiap baris diberi 7 bendera. Berapa total bendera yang dibagikan?",
+                        hint: "Hati-hati pada bagian (b): yang mendapat 7 bendera adalah 'Each row' (setiap baris), dan ada 9 baris!",
+                        fields: [
+                            { key: "a", answer: 6 },
+                            { key: "b", answer: 63 }
+                        ],
+                        explanation: "(a) 54 ÷ 9 = 6 anggota per baris. (b) Karena ada 9 baris dan tiap baris mendapat 7 bendera, totalnya 9 × 7 = 63 bendera."
+                    }
+                ]
+            },
+            {
+                id: "subD",
+                code: "Sub-Bab D",
+                shortTitle: "D. Bagi Bersisa",
+                title: "D. Division With Remainder (Dari Angka Kecil ke Cerita)",
+                questions: [
+                    {
+                        en: "Fill in the blanks:\n23 ÷ 5 = {q} R {r}",
+                        id: "Tentukan hasil bagi dan sisa (R) dari pembagian 23 dibagi 5.",
+                        hint: "Cari kelipatan 5 yang paling mendekati 23 namun tidak lebih dari 23 (5 × 4 = 20). Sisanya adalah 23 - 20.",
+                        fields: [
+                            { key: "q", answer: 4 },
+                            { key: "r", answer: 3 }
+                        ],
+                        explanation: "5 × 4 = 20, sisa 23 - 20 = 3. Jadi 23 ÷ 5 = 4 R 3."
+                    },
+                    {
+                        en: "Fill in the blanks:\n47 ÷ 6 = {q} R {r}",
+                        id: "Tentukan hasil bagi dan sisa (R) dari pembagian 47 dibagi 6.",
+                        hint: "Ingat perkalian 6: 6 × 7 = 42, sedangkan 6 × 8 = 48 (kelebihan). Jadi hasilnya 7, sisanya 47 - 42.",
+                        fields: [
+                            { key: "q", answer: 7 },
+                            { key: "r", answer: 5 }
+                        ],
+                        explanation: "6 × 7 = 42, sisa 47 - 42 = 5. Jadi 47 ÷ 6 = 7 R 5."
+                    },
+                    {
+                        en: "Fill in the missing number:\n38 ÷ {d} = 7 R 3",
+                        id: "Temukan angka pembagi yang hilang pada persamaan di atas.",
+                        hint: "Kurangi dulu 38 dengan sisanya (38 - 3 = 35). Lalu bagi 35 dengan 7!",
+                        fields: [
+                            { key: "d", answer: 5 }
+                        ],
+                        explanation: "38 - 3 (sisa) = 35. Karena 35 ÷ 7 = 5, maka pembaginya adalah 5 (Cek: 5 × 7 + 3 = 38)."
+                    },
+                    {
+                        en: "Divide:\n87 ÷ 6 = {q} R {r}",
+                        id: "Hitunglah hasil bagi dan sisa (R) dari 87 dibagi 6.",
+                        hint: "8 tens ÷ 6 = 1 ten (60), sisa 27 ones. Lalu 27 ÷ 6 = 4 (24) sisa 3.",
+                        fields: [
+                            { key: "q", answer: 14 },
+                            { key: "r", answer: 3 }
+                        ],
+                        explanation: "6 × 14 = 84, sisa 87 - 84 = 3. Jadi 87 ÷ 6 = 14 R 3."
+                    },
+                    {
+                        en: "A baker has 148 muffins. He packs them into boxes of 6.\nHe gets {q} full boxes and {r} muffins are left over.",
+                        id: "Seorang pembuat kue punya 148 muffin. Ia mengemasnya ke dalam kotak berisi 6 muffin. Berapa banyak kotak penuh yang didapat, dan berapa sisa muffinnya?",
+                        hint: "Hitung pembagian bersisa 148 ÷ 6! (14 tens ÷ 6 = 2 tens sisa 28 ones; 28 ÷ 6 = 4 sisa 4).",
+                        fields: [
+                            { key: "q", answer: 24 },
+                            { key: "r", answer: 4 }
+                        ],
+                        explanation: "148 ÷ 6 = 24 R 4 (Cek: 6 × 24 = 144, ditambah sisa 4 = 148). Jadi ada 24 kotak penuh dan 4 muffin tersisa."
+                    }
+                ]
+            },
+            {
+                id: "subE",
+                code: "Sub-Bab E",
+                shortTitle: "E. Bagi Tanpa Sisa",
+                title: "E. Division Without Remainder (Nilai Tempat & Bersusun)",
+                questions: [
+                    {
+                        en: "Divide using place value:\n900 ÷ 3 = {a}",
+                        id: "Gunakan nilai tempat untuk menghitung 900 dibagi 3.",
+                        hint: "900 adalah 9 hundreds (9 ratusan). Bagi 9 ratusan dengan 3 = 3 ratusan.",
+                        fields: [
+                            { key: "a", answer: 300 }
+                        ],
+                        explanation: "9 hundreds ÷ 3 = 3 hundreds = 300."
+                    },
+                    {
+                        en: "Divide tens first, then ones:\n84 ÷ 4 = {a}",
+                        id: "Bagi puluhan terlebih dahulu, lalu satuan untuk menghitung 84 dibagi 4.",
+                        hint: "8 tens ÷ 4 = 2 tens (20). Lalu 4 ones ÷ 4 = 1 one (1). Gabungkan hasilnya!",
+                        fields: [
+                            { key: "a", answer: 21 }
+                        ],
+                        explanation: "80 ÷ 4 = 20 dan 4 ÷ 4 = 1. Jadi 20 + 1 = 21 (Cek: 21 × 4 = 84)."
+                    },
+                    {
+                        en: "Divide hundreds, tens, and ones:\n693 ÷ 3 = {a}",
+                        id: "Bagi ratusan, puluhan, dan satuan untuk menghitung 693 dibagi 3.",
+                        hint: "600 ÷ 3 = 200, 90 ÷ 3 = 30, dan 3 ÷ 3 = 1.",
+                        fields: [
+                            { key: "a", answer: 231 }
+                        ],
+                        explanation: "600 ÷ 3 = 200, 90 ÷ 3 = 30, 3 ÷ 3 = 1. Total = 231."
+                    },
+                    {
+                        en: "Divide:\n95 ÷ 5 = {a}",
+                        id: "Hitunglah pembagian 95 dibagi 5.",
+                        hint: "9 tens ÷ 5 = 1 ten (50), sisa 45 ones. Lalu 45 ÷ 5 = 9.",
+                        fields: [
+                            { key: "a", answer: 19 }
+                        ],
+                        explanation: "50 ÷ 5 = 10, sisa 45 ÷ 5 = 9. Jadi 10 + 9 = 19 (Cek: 19 × 5 = 95)."
+                    },
+                    {
+                        en: "576 pupils are divided equally into 8 teams.\nThere are {a} pupils in each team.",
+                        id: "576 murid dibagi sama banyak ke dalam 8 tim. Berapa murid di setiap tim?",
+                        hint: "57 tens ÷ 8 = 7 tens (karena 8 × 7 = 56), sisa 1 ten. Gabungkan jadi 16 ones ÷ 8 = 2.",
+                        fields: [
+                            { key: "a", answer: 72 }
+                        ],
+                        explanation: "560 ÷ 8 = 70, sisa 16 ÷ 8 = 2. Jadi 70 + 2 = 72 murid per tim (Cek: 72 × 8 = 576)."
+                    }
+                ]
+            },
+            {
+                id: "subF",
+                code: "Sub-Bab F",
+                shortTitle: "F. Soal Cerita Dasar",
+                title: "F. Solving Word Problems 1 (Soal Cerita 1 Langkah G-E-T)",
+                questions: [
+                    {
+                        en: "Each tricycle has 3 wheels.\n8 tricycles have {a} wheels in all.",
+                        id: "Setiap sepeda roda tiga memiliki 3 roda. Berapa banyak roda yang dimiliki 8 sepeda roda tiga seluruhnya?",
+                        hint: "Groups = 8 sepeda, Each = 3 roda. Cari Total dengan perkalian (8 × 3).",
+                        fields: [
+                            { key: "a", answer: 24 }
+                        ],
+                        explanation: "8 kelompok × 3 roda = 24 roda seluruhnya."
+                    },
+                    {
+                        en: "There are 8 strawberries on each cake.\nThere are {a} strawberries on 7 cakes.",
+                        id: "Ada 8 stroberi di atas setiap kue. Berapa banyak stroberi di atas 7 kue?",
+                        hint: "G = 7 kue, E = 8 stroberi. Cari Total = 7 × 8.",
+                        fields: [
+                            { key: "a", answer: 56 }
+                        ],
+                        explanation: "7 kue × 8 stroberi = 56 stroberi (Cek: 56 ÷ 7 = 8)."
+                    },
+                    {
+                        en: "Ben saves $9 each week.\nBen saves $ {a} over 6 weeks.",
+                        id: "Ben menabung $9 setiap minggu. Berapa banyak uang yang ditabung Ben selama 6 minggu?",
+                        hint: "G = 6 minggu, E = $9 per minggu. Cari Total = 6 × 9.",
+                        fields: [
+                            { key: "a", answer: 54 }
+                        ],
+                        explanation: "6 minggu × $9 = $54."
+                    },
+                    {
+                        en: "A ribbon is 63 cm long. Mei cuts the ribbon into 7 equal pieces.\nThe length of each piece is {a} cm.",
+                        id: "Sebuah pita panjangnya 63 cm. Mei memotong pita itu menjadi 7 bagian sama panjang. Berapa panjang setiap potongan?",
+                        hint: "Total = 63 cm sudah diketahui, G = 7 bagian. Cari E = 63 ÷ 7.",
+                        fields: [
+                            { key: "a", answer: 9 }
+                        ],
+                        explanation: "63 cm ÷ 7 bagian = 9 cm per potongan (Cek: 7 × 9 = 63)."
+                    },
+                    {
+                        en: "Siti packs 48 oranges into bags. She packs 6 oranges into each bag.\nSiti uses {a} bags.",
+                        id: "Siti mengemas 48 jeruk ke dalam kantong. Ia memasukkan 6 jeruk ke setiap kantong. Berapa banyak kantong yang digunakan Siti?",
+                        hint: "Total = 48 jeruk, E = 6 jeruk per kantong. Cari G (jumlah kantong) = 48 ÷ 6.",
+                        fields: [
+                            { key: "a", answer: 8 }
+                        ],
+                        explanation: "48 jeruk ÷ 6 jeruk per kantong = 8 kantong (Cek: 8 × 6 = 48)."
+                    }
+                ]
+            },
+            {
+                id: "subG",
+                code: "Sub-Bab G",
+                shortTitle: "G. Soal Cerita Lanjut",
+                title: "G. Solving Word Problems 2 (2 Langkah & Teka-Teki Logika)",
+                questions: [
+                    {
+                        en: "Sarah buys 7 boxes of pencils. There are 6 pencils in each box.\n(a) She buys {a} pencils in all.\n(b) She gives 10 pencils to her brother. She has {b} pencils left.",
+                        id: "Sarah membeli 7 kotak pensil. Ada 6 pensil di tiap kotak. (a) Berapa total pensil yang dibeli? (b) Ia memberi 10 pensil ke adiknya. Berapa sisa pensil Sarah?",
+                        hint: "Langkah (a) Kalikan 7 × 6. Langkah (b) Kurangi hasilnya dengan 10.",
+                        fields: [
+                            { key: "a", answer: 42 },
+                            { key: "b", answer: 32 }
+                        ],
+                        explanation: "(a) 7 × 6 = 42 pensil. (b) 42 - 10 = 32 pensil tersisa."
+                    },
+                    {
+                        en: "Uncle Bob has 45 red apples and 18 green apples.\n(a) He has {a} apples altogether.\n(b) He packs all the apples equally into 9 bags. There are {b} apples in each bag.",
+                        id: "Paman Bob punya 45 apel merah dan 18 apel hijau. (a) Berapa total apelnya? (b) Ia mengemas semua apel itu sama banyak ke dalam 9 kantong. Berapa apel di tiap kantong?",
+                        hint: "Langkah (a) Jumlahkan 45 + 18 dulu untuk mendapat Total. Langkah (b) Bagi Totalnya dengan 9.",
+                        fields: [
+                            { key: "a", answer: 63 },
+                            { key: "b", answer: 7 }
+                        ],
+                        explanation: "(a) 45 + 18 = 63 apel. (b) 63 ÷ 9 = 7 apel per kantong."
+                    },
+                    {
+                        en: "There are 72 pupils in a hall.\n(a) They are divided into 8 equal teams. There are {a} pupils in each team.\n(b) Each pupil receives 6 badges. Each team receives {b} badges altogether.",
+                        id: "Ada 72 murid di aula. (a) Mereka dibagi menjadi 8 tim sama banyak. Berapa murid di tiap tim? (b) Tiap murid mendapat 6 lencana. Berapa total lencana yang diterima tiap tim?",
+                        hint: "Langkah (a) 72 ÷ 8 = jumlah murid per tim. Langkah (b) Kalikan murid per tim itu dengan 6 lencana.",
+                        fields: [
+                            { key: "a", answer: 9 },
+                            { key: "b", answer: 54 }
+                        ],
+                        explanation: "(a) 72 ÷ 8 = 9 murid per tim. (b) 9 murid × 6 lencana = 54 lencana per tim."
+                    },
+                    {
+                        en: "Mrs Lim wants to arrange flower pots in 8 equal rows. She has more than 50 pots, but fewer than 60 pots.\nMrs Lim has {a} flower pots.",
+                        id: "Bu Lim ingin menyusun pot bunga menjadi 8 baris sama banyak. Ia memiliki lebih dari 50 pot, tetapi kurang dari 60 pot. Berapa banyak pot bunga yang dimiliki Bu Lim?",
+                        hint: "Cari bilangan di tabel perkalian 8 yang nilainya di antara 50 dan 60! (8 × 6 = 48, 8 × 7 = ?, 8 × 8 = 64).",
+                        fields: [
+                            { key: "a", answer: 56 }
+                        ],
+                        explanation: "Kelipatan 8 yang terletak di antara 50 dan 60 hanyalah 56 (karena 8 × 7 = 56)."
+                    },
+                    {
+                        en: "Mr Raja wants to put stickers in 9 equal pages. He has more than 75 stickers, but fewer than 85 stickers.\nMr Raja has {a} stickers.",
+                        id: "Pak Raja ingin menempel stiker dalam 9 halaman sama banyak. Ia memiliki lebih dari 75 stiker, tetapi kurang dari 85 stiker. Berapa banyak stiker Pak Raja?",
+                        hint: "Cari bilangan di tabel perkalian 9 yang nilainya di antara 75 dan 85! (9 × 8 = 72, 9 × 9 = ?, 9 × 10 = 90).",
+                        fields: [
+                            { key: "a", answer: 81 }
+                        ],
+                        explanation: "Kelipatan 9 yang terletak di antara 75 dan 85 hanyalah 81 (karena 9 × 9 = 81)."
+                    }
+                ]
+            }
+        ];
+
+        // =========================================================================
+        // STATE MANAGEMENT & LOCALSTORAGE PERSISTENCE
+        // =========================================================================
+        const STORAGE_KEY = "cambridge_g3_maths_quiz_v3";
+
+        let appState = {
+            currentSubIdx: 0,
+            currentQIdx: 0,
+            showIndo: false,
+            showHint: false,
+            answers: {}
+        };
+
+        function loadState() {
+            try {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    appState = { ...appState, ...parsed };
+                }
+            } catch (e) {
+                console.warn("Gagal membaca localStorage:", e);
+            }
+        }
+
+        function saveState() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+                const ind = document.getElementById('save-indicator');
+                if (ind) {
+                    ind.classList.add('scale-105');
+                    setTimeout(() => ind.classList.remove('scale-105'), 200);
+                }
+            } catch (e) {
+                console.warn("Gagal menyimpan ke localStorage:", e);
+            }
+        }
+
+        function getQuestionKey(subIdx, qIdx) {
+            return `${subIdx}-${qIdx}`;
+        }
+
+        // =========================================================================
+        // RENDERING & NAVIGATION
+        // =========================================================================
+        function renderAll() {
+            renderSubTabs();
+            renderQuestionView();
+            updateGlobalScore();
+        }
+
+        function renderSubTabs() {
+            const container = document.getElementById('sub-tabs');
+            container.innerHTML = quizData.map((sub, idx) => {
+                const isActive = idx === appState.currentSubIdx;
+                let completedInSub = 0;
+                sub.questions.forEach((_, qIdx) => {
+                    const rec = appState.answers[getQuestionKey(idx, qIdx)];
+                    if (rec && rec.isCorrect) completedInSub++;
+                });
+
+                const activeClasses = isActive
+                    ? "bg-white text-indigo-700 shadow font-extrabold"
+                    : "text-white/90 hover:bg-white/15 font-bold";
+
+                return `
+                    <button onclick="selectSubChapter(${idx})" class="px-3.5 py-2 rounded-xl text-xs sm:text-sm whitespace-nowrap transition flex items-center gap-2 ${activeClasses}">
+                        <span>${sub.shortTitle}</span>
+                        <span class="text-[10px] px-1.5 py-0.5 rounded-md ${isActive ? 'bg-indigo-100 text-indigo-800' : 'bg-black/25 text-white'}">
+                            ${completedInSub}/5
+                        </span>
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function renderQuestionView() {
+            const sub = quizData[appState.currentSubIdx];
+            const q = sub.questions[appState.currentQIdx];
+            const key = getQuestionKey(appState.currentSubIdx, appState.currentQIdx);
+            const savedRecord = appState.answers[key] || { inputs: {}, submitted: false, isCorrect: false };
+
+            // Header Sub-Bab
+            document.getElementById('sub-badge').textContent = sub.code;
+            document.getElementById('sub-title').textContent = sub.title;
+
+            let subCorrect = 0;
+            sub.questions.forEach((_, idx) => {
+                const r = appState.answers[getQuestionKey(appState.currentSubIdx, idx)];
+                if (r && r.isCorrect) subCorrect++;
+            });
+            document.getElementById('sub-progress').textContent = `${subCorrect}/5 Benar`;
+
+            // Pills Nomor Soal (1 - 5)
+            const pillsContainer = document.getElementById('q-number-pills');
+            pillsContainer.innerHTML = sub.questions.map((_, idx) => {
+                const r = appState.answers[getQuestionKey(appState.currentSubIdx, idx)];
+                const isCurrent = idx === appState.currentQIdx;
+                let style = "bg-slate-100 text-slate-600 border-slate-300";
+                if (r && r.submitted) {
+                    style = r.isCorrect
+                        ? "bg-emerald-500 text-white border-emerald-600"
+                        : "bg-rose-500 text-white border-rose-600";
+                }
+                const ring = isCurrent ? "ring-2 ring-offset-2 ring-indigo-600 scale-110" : "opacity-85 hover:opacity-100";
+
+                return `
+                    <button onclick="selectQuestion(${idx})" class="w-9 h-9 rounded-xl border font-extrabold text-sm transition ${style} ${ring}">
+                        ${idx + 1}
+                    </button>
+                `;
+            }).join('');
+
+            // Question Labels & Inline Input Replacement
+            document.getElementById('q-label').textContent = `Soal ${appState.currentQIdx + 1} dari 5`;
+            
+            let formattedPrompt = q.en.replace(/\n/g, '<br>');
+            q.fields.forEach(f => {
+                const currentVal = savedRecord.inputs[f.key] !== undefined ? savedRecord.inputs[f.key] : "";
+                let borderClass = "border-indigo-400 focus:border-indigo-600 bg-white text-indigo-900";
+                if (savedRecord.submitted) {
+                    const userNum = parseInt(currentVal, 10);
+                    borderClass = (userNum === f.answer)
+                        ? "border-emerald-500 bg-emerald-50 text-emerald-900"
+                        : "border-rose-500 bg-rose-50 text-rose-900";
+                }
+
+                const inlineInputHtml = `<input 
+                    type="number" 
+                    id="input-${f.key}" 
+                    value="${currentVal}" 
+                    aria-label="Kotak jawaban"
+                    oninput="handleInputChange('${f.key}', this.value)"
+                    onkeydown="if(event.key === 'Enter') submitAnswer()"
+                    class="inline-block w-20 sm:w-24 mx-1 px-2 py-0.5 text-center font-extrabold text-lg sm:text-xl rounded-xl border-2 shadow-inner outline-none align-baseline transition ${borderClass}"
+                >`;
+                formattedPrompt = formattedPrompt.replace(`{${f.key}}`, inlineInputHtml);
+            });
+
+            document.getElementById('q-prompt-en').innerHTML = formattedPrompt;
+            document.getElementById('q-prompt-id').innerHTML = q.id.replace(/\n/g, '<br>');
+            document.getElementById('q-hint-text').textContent = q.hint;
+
+            // Toggles state
+            const indoEl = document.getElementById('q-prompt-id');
+            if (appState.showIndo) {
+                indoEl.classList.remove('hidden');
+                document.getElementById('indo-btn-label').textContent = "Sembunyikan";
+            } else {
+                indoEl.classList.add('hidden');
+                document.getElementById('indo-btn-label').textContent = "Terjemahan";
+            }
+
+            const hintEl = document.getElementById('hint-box');
+            if (appState.showHint) {
+                hintEl.classList.remove('hidden');
+            } else {
+                hintEl.classList.add('hidden');
+            }
+
+            // Immediate Feedback Display
+            const statusPill = document.getElementById('status-pill');
+            const fbBox = document.getElementById('feedback-box');
+            const fbHeader = document.getElementById('feedback-header');
+            const fbExp = document.getElementById('feedback-explanation');
+
+            if (savedRecord.submitted) {
+                statusPill.classList.remove('hidden');
+                fbBox.classList.remove('hidden');
+
+                if (savedRecord.isCorrect) {
+                    statusPill.className = "px-4 py-2 rounded-xl font-extrabold text-sm bg-emerald-100 text-emerald-800 border border-emerald-300";
+                    statusPill.textContent = "✅ BENAR!";
+
+                    fbBox.className = "mt-6 p-5 rounded-2xl border-2 bg-emerald-50 border-emerald-300 text-emerald-950";
+                    fbHeader.textContent = "🎉 Jawabanmu Tepat Sekali!";
+                    fbExp.textContent = q.explanation;
+                } else {
+                    statusPill.className = "px-4 py-2 rounded-xl font-extrabold text-sm bg-rose-100 text-rose-800 border border-rose-300";
+                    statusPill.textContent = "❌ BELUM TEPAT";
+
+                    fbBox.className = "mt-6 p-5 rounded-2xl border-2 bg-rose-50 border-rose-300 text-rose-950";
+                    fbHeader.textContent = "💡 Masih kurang tepat, coba perbaiki angka di dalam kotak lalu klik Cek Jawaban lagi!";
+                    fbExp.textContent = "Petunjuk: " + q.hint;
+                }
+            } else {
+                statusPill.classList.add('hidden');
+                fbBox.classList.add('hidden');
+            }
+
+            // Prev / Next Button States
+            const totalQuestions = quizData.length * 5;
+            const globalIndex = appState.currentSubIdx * 5 + appState.currentQIdx;
+            document.getElementById('overall-pos').textContent = `Soal ${globalIndex + 1} / ${totalQuestions}`;
+            document.getElementById('prev-btn').disabled = (globalIndex === 0);
+            document.getElementById('next-btn').disabled = (globalIndex === totalQuestions - 1);
+        }
+
+        // =========================================================================
+        // USER INTERACTIONS
+        // =========================================================================
+        function handleInputChange(fieldKey, value) {
+            const key = getQuestionKey(appState.currentSubIdx, appState.currentQIdx);
+            if (!appState.answers[key]) {
+                appState.answers[key] = { inputs: {}, submitted: false, isCorrect: false };
+            }
+            appState.answers[key].inputs[fieldKey] = value;
+            saveState();
+        }
+
+        function submitAnswer() {
+            const sub = quizData[appState.currentSubIdx];
+            const q = sub.questions[appState.currentQIdx];
+            const key = getQuestionKey(appState.currentSubIdx, appState.currentQIdx);
+
+            if (!appState.answers[key]) {
+                appState.answers[key] = { inputs: {}, submitted: false, isCorrect: false };
+            }
+
+            let allFilled = true;
+            let allCorrect = true;
+
+            q.fields.forEach(f => {
+                const inputEl = document.getElementById(`input-${f.key}`);
+                const rawVal = inputEl ? inputEl.value.trim() : "";
+                appState.answers[key].inputs[f.key] = rawVal;
+
+                if (rawVal === "") {
+                    allFilled = false;
+                    allCorrect = false;
+                } else if (parseInt(rawVal, 10) !== f.answer) {
+                    allCorrect = false;
+                }
+            });
+
+            if (!allFilled) {
+                const statusPill = document.getElementById('status-pill');
+                statusPill.classList.remove('hidden');
+                statusPill.className = "px-4 py-2 rounded-xl font-extrabold text-sm bg-amber-100 text-amber-800 border border-amber-300";
+                statusPill.textContent = "⚠️ Isi semua kotak kosong di dalam soal terlebih dahulu!";
+                return;
+            }
+
+            appState.answers[key].submitted = true;
+            appState.answers[key].isCorrect = allCorrect;
+            saveState();
+            renderAll();
+        }
+
+        function selectSubChapter(subIdx) {
+            appState.currentSubIdx = subIdx;
+            appState.currentQIdx = 0;
+            saveState();
+            renderAll();
+        }
+
+        function selectQuestion(qIdx) {
+            appState.currentQIdx = qIdx;
+            saveState();
+            renderAll();
+        }
+
+        function navigateQuestion(delta) {
+            const maxIndex = quizData.length * 5 - 1;
+            let globalIdx = appState.currentSubIdx * 5 + appState.currentQIdx + delta;
+            if (globalIdx < 0) globalIdx = 0;
+            if (globalIdx > maxIndex) globalIdx = maxIndex;
+
+            appState.currentSubIdx = Math.floor(globalIdx / 5);
+            appState.currentQIdx = globalIdx % 5;
+            saveState();
+            renderAll();
+        }
+
+        function toggleIndo() {
+            appState.showIndo = !appState.showIndo;
+            saveState();
+            renderQuestionView();
+        }
+
+        function toggleHint() {
+            appState.showHint = !appState.showHint;
+            saveState();
+            renderQuestionView();
+        }
+
+        function updateGlobalScore() {
+            let correctCount = 0;
+            Object.values(appState.answers).forEach(rec => {
+                if (rec && rec.isCorrect) correctCount++;
+            });
+            document.getElementById('total-correct').textContent = correctCount;
+        }
+
+        // Reset Modal Handlers
+        function openResetModal() {
+            document.getElementById('reset-modal').classList.remove('hidden');
+        }
+        function closeResetModal() {
+            document.getElementById('reset-modal').classList.add('hidden');
+        }
+        function confirmReset() {
+            localStorage.removeItem(STORAGE_KEY);
+            appState = {
+                currentSubIdx: 0,
+                currentQIdx: 0,
+                showIndo: false,
+                showHint: false,
+                answers: {}
+            };
+            saveState();
+            closeResetModal();
+            renderAll();
+        }
+
+        // =========================================================================
+        // INITIALIZATION
+        // =========================================================================
+        window.onload = function() {
+            loadState();
+            renderAll();
+        };
+    </script>
+</body>
+</html>
